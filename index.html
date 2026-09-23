@@ -180,16 +180,16 @@
         <button class="menu-btn purple" onclick="showInput('create')">🌐 Oda Kur (Host)</button>
         <div class="input-group" id="createGroup">
             <!-- TARAYICI OTOMATİK DOLDURMA ENGELİ (new-password) EKLENDİ -->
-            <input type="text" id="hostRoom" placeholder="Oda Adı (Örn: 6A)" autocomplete="new-password" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ]/g, '')">
-            <input type="password" id="hostPass" placeholder="Oda Şifresi Belirle" autocomplete="new-password" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '')">
+            <input type="text" id="hostRoom" placeholder="Oda Adı (Örn: 6A)" autocomplete="off" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ]/g, '')">
+            <input type="text" id="hostPass" placeholder="Oda Şifresi Belirle" autocomplete="off" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '')">
             <button class="menu-btn purple" style="width:100%; font-size:1.1rem; padding:10px; margin:0;" onclick="createNetworkGame()">Oluştur ve Bekle</button>
         </div>
 
         <button class="menu-btn blue" onclick="showInput('join')">🤝 Odaya Katıl (Misafir)</button>
         <div class="input-group" id="joinGroup">
             <!-- TARAYICI OTOMATİK DOLDURMA ENGELİ (new-password) EKLENDİ -->
-            <input type="text" id="guestRoom" placeholder="Oda Adı" autocomplete="new-password" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ]/g, '')">
-            <input type="password" id="guestPass" placeholder="Oda Şifresi" autocomplete="new-password" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '')">
+            <input type="text" id="guestRoom" placeholder="Oda Adı" autocomplete="off" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ]/g, '')">
+            <input type="text" id="guestPass" placeholder="Oda Şifresi" autocomplete="off" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '')">
             <button class="menu-btn blue" id="joinBtn" style="width:100%; font-size:1.1rem; padding:10px; margin:0;" onclick="joinNetworkGame()">Bağlan</button>
         </div>
         
