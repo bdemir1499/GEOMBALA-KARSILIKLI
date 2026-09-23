@@ -171,6 +171,10 @@
         <h1>Geometri Tombala! 📐</h1>
         <p style="color:#57606f; font-weight:bold; margin-bottom:15px; font-size: 1.1rem; padding: 0 10px; text-align:center;">Kartları doğru geometrik sembollerle eşleştirmeye hazır mısın?</p>
         
+        <div style="background: #ff7675; color: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.95rem; width: 90%; max-width: 400px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #d63031;">
+            ⚠️ GÜVENLİK UYARISI: Oda şifresi belirlerken veya odaya katılırken E-Okul, E-Posta veya Sosyal Medya şifrelerinizi KESİNLİKLE KULLANMAYINIZ! Basit şifreler tercih ediniz.
+        </div>
+        
         <button class="menu-btn green" onclick="startLocalGame()">💻 Aynı Tahtada Oyna</button>
         
         <button class="menu-btn purple" onclick="showInput('create')">🌐 Oda Kur (Host)</button>
@@ -430,20 +434,30 @@
             
             conn.on('data', (data) => {
                 // GÜVENLİK/ANTI-CHEAT: Dışarıdan gelen verinin yapısını sıkı bir şekilde denetle
-                // Veri formatı bozuksa veya manipüle edilmişse işlem yapma reddet
+                // Veri formatı bozuksa veya kurallara uymuyorsa reddet (Hile Koruması)
                 if (!data || typeof data !== 'object') return;
 
                 if (data.type === 'START' && Array.isArray(data.cards)) { 
                     state.shuffledCards = data.cards; state.drawTurn = 1; buildGameUI(); 
                 } 
-                else if (data.type === 'REVEAL' && typeof data.index === 'number') { 
+                else if (data.type === 'REVEAL' && typeof data.index === 'number') {
+                    // Karşı taraf sırası gelmeden veya geçersiz bir kartı açmaya çalışıyorsa engelle
+                    if (state.drawTurn === state.myPlayer || data.index < 0 || data.index >= 20) return;
                     revealCardUI(data.index); 
                 } 
                 else if (data.type === 'CLAIM' && typeof data.index === 'number' && typeof data.player === 'number' && typeof data.cardId === 'number') { 
-                    // Sadece geçerli veri id'leri için işleme al
-                    if(data.index >= 0 && data.index < 20 && (data.player === 1 || data.player === 2)) {
-                        claimCardUI(data.index, data.player, data.cardId); 
-                    }
+                    // 1. Kart gerçekten açık olan kart mı?
+                    if (data.index !== state.revealedIndex) return;
+                    
+                    // 2. İddia edilen kart ID'si, açılan kartın ID'si ile eşleşiyor mu?
+                    if (state.shuffledCards[data.index].id !== data.cardId) return;
+
+                    // 3. İddia eden oyuncunun (1 veya 2) tahtasında bu kart gerçekten var mı?
+                    let validBoard = data.player === 1 ? BOARD_1_LAYOUT : BOARD_2_LAYOUT;
+                    if (!validBoard.includes(data.cardId)) return;
+
+                    // Her şey kurallara uygunsa işlemi onayla
+                    claimCardUI(data.index, data.player, data.cardId); 
                 }
             });
             
