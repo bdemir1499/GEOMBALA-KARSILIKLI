@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Geometri Tombala Oyunu!</title>
+    <!-- Harici PeerJS Kütüphanesi -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Fredoka', sans-serif; margin: 0; padding: 0;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100dvh; display: flex; flex-direction: column; align-items: center;
+            overflow-x: hidden; touch-action: none;
+        }
+
+        h1 { color: #5f27cd; font-size: 2rem; margin: 10px 0 5px 0; text-shadow: 2px 2px 0px #ffeaa7; text-align: center; line-height: 1.1;}
+
+        #menuScreen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 30px;
+            border: 5px dashed #ff9ff3; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center; z-index: 100; margin-top: 3vh; width: 90%; max-width: 500px;
+        }
+
+        .creator-info {
+            display: flex; flex-direction: column; align-items: center; margin-bottom: 15px;
+            background: #f1f2f6; padding: 15px 25px; border-radius: 20px;
+            border: 3px solid #dfe4ea; box-shadow: 0 5px 15px rgba(0,0,0,0.05); width: 80%;
+        }
+
+        .creator-name { font-size: 1.6rem; color: #2d3436; font-weight: 700; margin: 0 0 5px 0; }
+        .creator-title { font-size: 1rem; color: #636e72; font-weight: 600; margin: 0 0 10px 0; }
+
+        .instagram-link {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            text-decoration: none; color: #e1306c; font-weight: 600; font-size: 1.1rem;
+            background: white; padding: 5px 15px; border-radius: 20px;
+            border: 2px solid #ff7675; transition: transform 0.2s;
+        }
+        .instagram-link:active { transform: scale(0.95); }
+
+        .menu-btn {
+            background: #1dd1a1; color: white; border: none; padding: 15px 30px;
+            font-size: 1.3rem; font-family: 'Fredoka', sans-serif; font-weight: bold;
+            border-radius: 50px; cursor: pointer; margin: 8px; width: 90%; max-width: 300px;
+            box-shadow: 0 8px 0 #10ac84; transition: transform 0.1s;
+        }
+        .menu-btn:active { transform: translateY(8px); box-shadow: 0 0 0 transparent; }
+        .menu-btn.blue { background: #48dbfb; box-shadow: 0 8px 0 #0abde3; }
+        .menu-btn.purple { background: #a29bfe; box-shadow: 0 8px 0 #6c5ce7; }
+
+        .input-group { display: none; flex-direction: column; gap: 10px; margin: 10px 0; width: 90%; max-width: 300px; }
+        .input-group input {
+            padding: 12px; border-radius: 15px; border: 3px solid #ccc;
+            font-size: 1.1rem; font-family: 'Fredoka'; text-align: center;
+        }
+        .input-group input:focus { border-color: #5f27cd; outline: none; }
+
+        #gameScreen { display: none; width: 100%; max-width: 1000px; padding: 5px; flex-direction: column; align-items: center; box-sizing: border-box;}
+        
+        .status-bar {
+            background: white; padding: 8px 15px; border-radius: 15px; border: 4px solid #feca57;
+            font-size: 1.2rem; font-weight: bold; color: #d35400; margin-bottom: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1); text-align: center; width: 95%; max-width: 600px;
+            transition: all 0.3s ease;
+        }
+
+        .pool-container {
+            background: #fff9c4; border: 4px dashed #fbc02d; border-radius: 15px;
+            padding: 8px; width: 95%; max-width: 600px; box-sizing: border-box; margin-bottom: 5px;
+        }
+        .pool-title { color: #f39c12; font-size: 1rem; font-weight: bold; margin-bottom: 5px; text-align: center; }
+        .cards-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+
+        .pool-card {
+            background: #ff9f43; color: white; border: 3px solid #ee5253; border-radius: 8px;
+            height: 40px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 3px 0 #ee5253;
+            user-select: none; transition: transform 0.2s; text-align: center; line-height: 1.1;
+        }
+        .pool-card:active { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+        
+        .pool-card.revealed {
+            background: #ffffff; color: #2d3436; border-color: #5f27cd; box-shadow: 0 3px 0 #341f97;
+            font-size: 0.8rem; cursor: grab; z-index: 10;
+        }
+        .pool-card.claimed { visibility: hidden; }
+
+        .boards-container { display: flex; flex-direction: column; width: 95%; max-width: 600px; gap: 5px; align-items: center; }
+
+        .player-board {
+            width: 100%; background: #ffffff; border-radius: 12px; padding: 5px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1); border: 4px solid;
+            display: flex; flex-direction: column; box-sizing: border-box;
+        }
+        .board-title { font-size: 1.1rem; font-weight: bold; text-align: center; margin-bottom: 5px; color: white; padding: 4px; border-radius: 8px;}
+        
+        .board-p1 { border-color: #0abde3; } .board-p1 .board-title { background: #0abde3; }
+        .board-p2 { border-color: #10ac84; } .board-p2 .board-title { background: #10ac84; }
+
+        .board-hidden { display: none !important; }
+        .board-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+
+        .board-slot {
+            background: #f1f2f6; border: 2px dashed #a4b0be; border-radius: 6px;
+            height: 40px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.9rem; color: #2f3542; position: relative;
+        }
+        .board-slot.empty-deco { background: #feca57; border: none; }
+        .board-slot.filled { background: #55efc4; border: 2px solid #00b894; color: #2d3436; animation: pop 0.4s; }
+
+        .drag-clone {
+            position: absolute; pointer-events: none; z-index: 1000;
+            background: #ffffff; color: #2d3436; border: 3px solid #5f27cd;
+            border-radius: 10px; padding: 5px; font-weight: bold; font-family: 'Fredoka';
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3); text-align: center; font-size: 0.9rem;
+            width: 120px; display: flex; align-items: center; justify-content: center;
+        }
+
+        .angle-hat { position: relative; display: inline-block; }
+        .angle-hat::after { content: "^"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-size: 1.2em; font-weight: normal; }
+
+        #toast {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(45, 52, 54, 0.95); color: white; padding: 20px 30px;
+            border-radius: 20px; font-weight: bold; font-size: 1.2rem; text-align: center;
+            z-index: 9999; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            pointer-events: none; line-height: 1.4; border: 4px solid #ff7675; width: 80%; max-width: 350px;
+        }
+        .toast-title { color: #ff7675; font-size: 1.4rem; display:block; margin-bottom: 5px; }
+        .toast-hint { font-size:0.95rem; font-weight:normal; display:block; margin-top:10px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; color: #dfe4ea; }
+
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 200; }
+        .modal-content { background: #ffffff; padding: 30px; border-radius: 25px; text-align: center; border: 6px solid #fdcb6e; box-shadow: 0 15px 35px rgba(0,0,0,0.3); animation: modalPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes modalPop { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        #confetti { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:150; }
+
+        @media (max-width: 400px) {
+            .pool-card { font-size: 0.7rem; height: 35px; }
+            .board-slot { font-size: 0.75rem; height: 35px; }
+            h1 { font-size: 1.7rem; }
+            .creator-name { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confetti"></canvas>
+    <div id="toast"></div>
+
+    <div id="menuScreen">
+        <div class="creator-info">
+            <h2 class="creator-name">Bekir Demirel</h2>
+            <p class="creator-title">Matematik Öğretmeni</p>
+            <a href="https://instagram.com/matejital_mt25" target="_blank" class="instagram-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+                @matejital_mt25
+            </a>
+        </div>
+        
+        <h1>Geometri Tombala! 📐</h1>
+        <p style="color:#57606f; font-weight:bold; margin-bottom:15px; font-size: 1.1rem; padding: 0 10px; text-align:center;">Kartları doğru geometrik sembollerle eşleştirmeye hazır mısın?</p>
+        
+        <button class="menu-btn green" onclick="startLocalGame()">💻 Aynı Tahtada Oyna</button>
+        
+        <button class="menu-btn purple" onclick="showInput('create')">🌐 Oda Kur (Host)</button>
+        <div class="input-group" id="createGroup">
+            <input type="text" id="hostRoom" placeholder="Oda Adı (Örn: 6A)" autocomplete="off">
+            <input type="password" id="hostPass" placeholder="Oda Şifresi Belirle" autocomplete="off">
+            <button class="menu-btn purple" style="width:100%; font-size:1.1rem; padding:10px; margin:0;" onclick="createNetworkGame()">Oluştur ve Bekle</button>
+        </div>
+
+        <button class="menu-btn blue" onclick="showInput('join')">🤝 Odaya Katıl (Misafir)</button>
+        <div class="input-group" id="joinGroup">
+            <input type="text" id="guestRoom" placeholder="Oda Adı" autocomplete="off">
+            <input type="password" id="guestPass" placeholder="Oda Şifresi" autocomplete="off">
+            <button class="menu-btn blue" style="width:100%; font-size:1.1rem; padding:10px; margin:0;" onclick="joinNetworkGame()">Bağlan</button>
+        </div>
+        
+        <p id="connStatus" style="color:#d63031; font-weight:bold; margin-top:15px; text-align:center; padding:0 10px;"></p>
+    </div>
+
+    <div id="gameScreen">
+        <div class="status-bar" id="statusBar">Oyun Başlıyor...</div>
+
+        <div class="pool-container">
+            <div class="pool-title">Torbada Kalan Kartlar</div>
+            <div class="cards-grid" id="cardsGrid"></div>
+        </div>
+
+        <div class="boards-container">
+            <div class="player-board board-p1" id="board1_container">
+                <div class="board-title" id="p1Title">1. Oyuncu (Sen)</div>
+                <div class="board-grid" id="board1"></div>
+            </div>
+
+            <div class="player-board board-p2" id="board2_container">
+                <div class="board-title" id="p2Title">2. Oyuncu (Arkadaşın)</div>
+                <div class="board-grid" id="board2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 id="winnerText" style="color:#d63031; font-size: 2.5rem;">🎉 KAZANDIN! 🎉</h2>
+            <p>Kartındaki tüm geometrik gösterimleri başarıyla tamamladın!</p>
+            <button class="menu-btn blue" onclick="location.reload()">Ana Menüye Dön 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const ALL_CARDS = [
+            { id: 1, text: "AB doğru parçası", symbol: "[AB]" }, { id: 2, text: "B noktası", symbol: "B" },
+            { id: 3, text: "CD doğrusu", symbol: "CD" }, { id: 4, text: "KLM açısı", symbol: "K<span class='angle-hat'>L</span>M" },
+            { id: 5, text: "MN ışını", symbol: "[MN" }, { id: 6, text: "AB doğru parçasının uzunluğu", symbol: "|AB|" },
+            { id: 7, text: "KL doğrusu", symbol: "KL" }, { id: 8, text: "C noktası", symbol: "C" },
+            { id: 9, text: "CD ışını", symbol: "[CD" }, { id: 10, text: "MN doğru parçası", symbol: "[MN]" },
+            { id: 11, text: "ABC açısı", symbol: "A<span class='angle-hat'>B</span>C" }, { id: 12, text: "AB doğrusu", symbol: "AB" },
+            { id: 13, text: "CD doğru parçası", symbol: "[CD]" }, { id: 14, text: "YZ doğru parçasının uzunluğu", symbol: "|YZ|" },
+            { id: 15, text: "Z noktası", symbol: "Z" }, { id: 16, text: "AB ışını", symbol: "[AB" },
+            { id: 17, text: "YZ doğrusu", symbol: "YZ" }, { id: 18, text: "KL doğru parçası", symbol: "[KL]" },
+            { id: 19, text: "MN doğrusu", symbol: "MN" }, { id: 20, text: "KL ışını", symbol: "[KL" }
+        ];
+
+        const BOARD_1_LAYOUT = ['e', 1, 19, 'e', 6, 13, 'e', 5, 3, 15, 7, 8, 'e', 11, 'e'];
+        const BOARD_2_LAYOUT = [16, 17, 'e', 18, 2, 'e', 4, 'e', 10, 'e', 9, 'e', 20, 14, 12];
+
+        // GÜVENLİK/KVKK KISMI: Daha güçlü STUN/TURN Yapılandırması
+        const peerOptions = {
+            config: {
+                iceTransportPolicy: 'all',
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:global.stun.twilio.com:3478' },
+                    { 
+                        urls: 'turn:openrelay.metered.ca:80',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    },
+                    { 
+                        urls: 'turn:openrelay.metered.ca:443',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    },
+                    { 
+                        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    }
+                ]
+            }
+        };
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        function playSound(type) {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'pop') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(900, now+0.1);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now+0.1);
+                osc.start(now); osc.stop(now+0.1);
+            } else if (type === 'correct') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(1000, now+0.1);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now+0.2);
+                osc.start(now); osc.stop(now+0.2);
+            } else if (type === 'wrong') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(250, now); osc.frequency.linearRampToValueAtTime(150, now+0.3);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now+0.3);
+                osc.start(now); osc.stop(now+0.3);
+            } else if (type === 'tada') {
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                    o.type = 'sine'; o.connect(g); g.connect(audioCtx.destination);
+                    o.frequency.value = freq; g.gain.setValueAtTime(0, now+i*0.1);
+                    g.gain.linearRampToValueAtTime(0.3, now+i*0.1+0.05); g.gain.exponentialRampToValueAtTime(0.01, now+i*0.1+0.6);
+                    o.start(now+i*0.1); o.stop(now+i*0.1+0.6);
+                });
+            }
+        }
+
+        let state = { mode: 'local', drawTurn: 1, actionPlayer: null, myPlayer: 1, shuffledCards: [], revealedIndex: null, p1Score: 0, p2Score: 0 };
+        let peer = null; let conn = null;
+
+        function showInput(type) {
+            playSound('pop');
+            document.getElementById('createGroup').style.display = type === 'create' ? 'flex' : 'none';
+            document.getElementById('joinGroup').style.display = type === 'join' ? 'flex' : 'none';
+        }
+
+        // GÜVENLİK/KVKK: Oda adı ve şifresi bilgisayarda geri döndürülemez bir şifreye (hash) dönüştürülür.
+        // Dış sunuculara asla oda adınız ve şifreniz düz metin olarak gitmez.
+        function getSecureRoomId(roomName, password) {
+            let str = roomName.trim().toLowerCase() + "||_||" + password.trim();
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                let char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            let base = btoa(encodeURIComponent(str)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
+            return `geotmb_s_${Math.abs(hash).toString(36)}_${base}`;
+        }
+
+        function updateStatusMsg(msg, color) {
+            let el = document.getElementById('connStatus');
+            el.innerText = msg; el.style.color = color;
+        }
+
+        function createNetworkGame() {
+            playSound('pop');
+            const name = document.getElementById('hostRoom').value;
+            const pass = document.getElementById('hostPass').value;
+            if(!name || !pass) { alert("Lütfen oda adı ve şifresini eksiksiz girin!"); return; }
+            
+            updateStatusMsg("Oda şifreleniyor, bağlantı kuruluyor...", "#d35400");
+            
+            if(peer) peer.destroy();
+            const secureId = getSecureRoomId(name, pass);
+            peer = new Peer(secureId, peerOptions);
+            
+            peer.on('open', () => { 
+                updateStatusMsg(`Oda Kuruldu! Arkadaşının şifreyle bağlanması bekleniyor...`, "#1dd1a1");
+            });
+            
+            peer.on('connection', (connection) => { 
+                // YENİ EKLENEN GÜVENLİK (KAPIYI KİLİTLEME): 
+                // Eğer halihazırda biri bağlıysa (oyun başladıysa), dışarıdan gelen 3. kişileri veya 
+                // saldırı (spam) denemelerini anında reddet (Drop).
+                if (conn && conn.open) {
+                    connection.close(); // Bağlantıyı anında kes
+                    console.log("Yetkisiz 3. kişi erişimi engellendi.");
+                    return; 
+                }
+                
+                updateStatusMsg("Bağlantı yakalandı! Güvenli köprü kuruluyor...", "#0abde3");
+                conn = connection; 
+                
+                conn.on('open', () => {
+                    updateStatusMsg("Oyuncu bağlandı! Kapı kilitlendi, oyun başlıyor...", "#1dd1a1");
+                    setupNetworkGame(1);
+                });
+            });
+            
+            peer.on('error', (err) => { 
+                updateStatusMsg("Oda açılamadı! (" + err.type + ")", "#d63031");
+            });
+        }
+
+        function joinNetworkGame() {
+            playSound('pop');
+            const name = document.getElementById('guestRoom').value;
+            const pass = document.getElementById('guestPass').value;
+            if(!name || !pass) { alert("Lütfen oda adı ve şifresini eksiksiz girin!"); return; }
+            
+            updateStatusMsg("Oda aranıyor...", "#0abde3");
+            
+            if(peer) peer.destroy();
+            peer = new Peer(undefined, peerOptions);
+
+            peer.on('open', () => {
+                updateStatusMsg("Sinyal sunucusuna ulaşıldı, şifreli köprü kuruluyor...", "#f39c12");
+                const secureId = getSecureRoomId(name, pass);
+                conn = peer.connect(secureId, { reliable: true });
+                
+                conn.on('open', () => { 
+                    updateStatusMsg("Bağlantı başarılı! Oyun başlatılıyor...", "#1dd1a1");
+                    setupNetworkGame(2); 
+                });
+                
+                conn.on('error', (err) => { 
+                    updateStatusMsg("Veri bağlantısı kurulamadı!", "#d63031");
+                });
+            });
+            
+            peer.on('error', (err) => { 
+                if(err.type === 'peer-unavailable') {
+                    updateStatusMsg("Oda bulunamadı! Oda adını ve şifreyi kontrol edin.", "#d63031");
+                } else {
+                    updateStatusMsg("Hata: " + err.type, "#d63031");
+                }
+            });
+        }
+
+        function setupNetworkGame(playerNum) {
+            state.mode = playerNum === 1 ? 'host' : 'guest';
+            state.myPlayer = playerNum;
+            
+            conn.on('data', (data) => {
+                // GÜVENLİK/ANTI-CHEAT: Dışarıdan gelen verinin yapısını sıkı bir şekilde denetle
+                // Veri formatı bozuksa veya manipüle edilmişse işlem yapma reddet
+                if (!data || typeof data !== 'object') return;
+
+                if (data.type === 'START' && Array.isArray(data.cards)) { 
+                    state.shuffledCards = data.cards; state.drawTurn = 1; buildGameUI(); 
+                } 
+                else if (data.type === 'REVEAL' && typeof data.index === 'number') { 
+                    revealCardUI(data.index); 
+                } 
+                else if (data.type === 'CLAIM' && typeof data.index === 'number' && typeof data.player === 'number' && typeof data.cardId === 'number') { 
+                    // Sadece geçerli veri id'leri için işleme al
+                    if(data.index >= 0 && data.index < 20 && (data.player === 1 || data.player === 2)) {
+                        claimCardUI(data.index, data.player, data.cardId); 
+                    }
+                }
+            });
+            
+            if (state.mode === 'host') {
+                state.shuffledCards = [...ALL_CARDS].sort(() => Math.random() - 0.5);
+                setTimeout(() => { conn.send({ type: 'START', cards: state.shuffledCards }); }, 1500);
+                buildGameUI();
+            }
+        }
+
+        function startLocalGame() {
+            playSound('pop');
+            state.mode = 'local'; state.myPlayer = 1;
+            state.drawTurn = 1;
+            state.shuffledCards = [...ALL_CARDS].sort(() => Math.random() - 0.5);
+            buildGameUI();
+        }
+
+        function buildGameUI() {
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'flex';
+            if (state.mode === 'local') {
+                document.getElementById('p1Title').innerText = "1. Oyuncu (Şekil-2)";
+                document.getElementById('p2Title').innerText = "2. Oyuncu (Şekil-3)";
+            } else {
+                document.getElementById('p1Title').innerText = state.myPlayer === 1 ? "1. Oyuncu (Sen)" : "1. Oyuncu (Rakip)";
+                document.getElementById('p2Title').innerText = state.myPlayer === 2 ? "2. Oyuncu (Sen)" : "2. Oyuncu (Rakip)";
+                if(state.myPlayer === 1) { document.getElementById('board1_container').style.borderColor = "#ff9f43"; document.getElementById('board2_container').classList.add('board-hidden'); }
+                if(state.myPlayer === 2) { document.getElementById('board2_container').style.borderColor = "#ff9f43"; document.getElementById('board1_container').classList.add('board-hidden'); }
+            }
+            renderPool();
+            renderBoard('board1', BOARD_1_LAYOUT);
+            renderBoard('board2', BOARD_2_LAYOUT);
+            updateStatus();
+        }
+
+        function renderPool() {
+            const grid = document.getElementById('cardsGrid'); grid.innerHTML = '';
+            state.shuffledCards.forEach((card, index) => {
+                let div = document.createElement('div');
+                div.className = 'pool-card'; div.id = `pool_${index}`; div.innerText = "?";
+                div.onclick = () => handlePoolClick(index);
+                div.onpointerdown = (e) => startDrag(e, div, index, card.id);
+                grid.appendChild(div);
+            });
+        }
+
+        function renderBoard(elementId, layout) {
+            const grid = document.getElementById(elementId); grid.innerHTML = '';
+            layout.forEach(item => {
+                let div = document.createElement('div');
+                if (item === 'e') { div.className = 'board-slot empty-deco'; } 
+                else {
+                    let cardData = ALL_CARDS.find(c => c.id === item);
+                    div.className = 'board-slot'; div.id = `slot_${item}`; div.innerHTML = cardData.symbol;
+                }
+                grid.appendChild(div);
+            });
+        }
+
+        function updateStatus() {
+            const sb = document.getElementById('statusBar');
+            if (state.revealedIndex !== null) {
+                sb.innerText = "👀 Şekil açıldı! Kendi kartında bulan sürüklesin.";
+                sb.style.borderColor = "#9b59b6"; sb.style.color = "#8e44ad";
+                return;
+            }
+            if (state.mode === 'local') {
+                sb.innerText = `${state.drawTurn}. Oyuncu Torbadan Kart Çeksin 🎯`;
+                sb.style.borderColor = state.drawTurn === 1 ? "#0abde3" : "#10ac84";
+                sb.style.color = state.drawTurn === 1 ? "#0abde3" : "#10ac84";
+            } else {
+                if (state.drawTurn === state.myPlayer) {
+                    sb.innerText = "Sıra Sende! Torbadan bir kart aç 🎯";
+                    sb.style.borderColor = "#1dd1a1"; sb.style.color = "#1dd1a1";
+                } else {
+                    sb.innerText = "Sıra Rakipte... Torbadan kart çekmesini bekle ⏳";
+                    sb.style.borderColor = "#a4b0be"; sb.style.color = "#57606f";
+                }
+            }
+        }
+
+        function showToastMessage(msg) {
+            let toast = document.getElementById('toast');
+            toast.innerHTML = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+
+        function handlePoolClick(index) {
+            if (state.revealedIndex !== null) {
+                playSound('wrong'); showToastMessage("<span class='toast-title'>⚠️ Uyarı!</span>Önce açık olan şekli yerleştirmelisin."); return;
+            }
+            if (state.mode !== 'local' && state.drawTurn !== state.myPlayer) {
+                playSound('wrong'); showToastMessage("<span class='toast-title'>✋ Bekle!</span>Kart çekme sırası rakipte."); return;
+            }
+            let el = document.getElementById(`pool_${index}`);
+            if (el.classList.contains('revealed') || el.classList.contains('claimed')) return;
+            
+            playSound('pop'); 
+            revealCardUI(index);
+            if (state.mode !== 'local') conn.send({ type: 'REVEAL', index: index });
+        }
+
+        function revealCardUI(index) {
+            state.revealedIndex = index;
+            let cardId = state.shuffledCards[index].id;
+            state.actionPlayer = BOARD_1_LAYOUT.includes(cardId) ? 1 : 2;
+            let el = document.getElementById(`pool_${index}`);
+            el.classList.add('revealed'); el.innerText = state.shuffledCards[index].text;
+            updateStatus(); 
+        }
+
+        let dragClone = null; let activeDragIndex = null; let activeDragCardId = null;
+
+        function startDrag(e, sourceEl, index, cardId) {
+            if (!sourceEl.classList.contains('revealed')) return;
+            if (state.mode !== 'local' && state.actionPlayer !== state.myPlayer) {
+                playSound('wrong'); showToastMessage("<span class='toast-title'>✋ Bekle!</span>Bu şekil senin kartında yok sanki?"); return;
+            }
+
+            e.preventDefault(); playSound('pop');
+            activeDragIndex = index; activeDragCardId = cardId;
+            dragClone = sourceEl.cloneNode(true); dragClone.classList.add('drag-clone');
+            document.body.appendChild(dragClone);
+            moveClone(e);
+            
+            window.addEventListener('pointermove', moveDrag);
+            window.addEventListener('pointerup', endDrag);
+        }
+
+        function moveClone(e) {
+            if(dragClone) {
+                let clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+                let clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+                if(clientX !== undefined && clientY !== undefined) {
+                    dragClone.style.left = (clientX - dragClone.offsetWidth/2) + 'px';
+                    dragClone.style.top = (clientY - dragClone.offsetHeight/2) + 'px';
+                }
+            } 
+        }
+
+        function moveDrag(e) { moveClone(e); }
+
+        function endDrag(e) {
+            window.removeEventListener('pointermove', moveDrag);
+            window.removeEventListener('pointerup', endDrag);
+            if (!dragClone) return;
+
+            let clientX = e.clientX !== undefined ? e.clientX : (e.changedTouches && e.changedTouches[0].clientX);
+            let clientY = e.clientY !== undefined ? e.clientY : (e.changedTouches && e.changedTouches[0].clientY);
+            
+            let targetSlot = null; let minDistance = 80; 
+            let slots = document.querySelectorAll('.player-board:not(.board-hidden) .board-slot:not(.empty-deco):not(.filled)');
+            
+            for (let slot of slots) {
+                let rect = slot.getBoundingClientRect();
+                let slotCenterX = rect.left + (rect.width / 2);
+                let slotCenterY = rect.top + (rect.height / 2);
+                let distance = Math.hypot(clientX - slotCenterX, clientY - slotCenterY);
+                if (distance < minDistance) { minDistance = distance; targetSlot = slot; }
+            }
+
+            if (targetSlot) {
+                let isP1Target = document.getElementById('board1').contains(targetSlot);
+                let targetBoardOwner = isP1Target ? 1 : 2;
+
+                if (state.mode === 'local' && targetBoardOwner !== state.actionPlayer) {
+                    dragFailed("<span class='toast-title'>❌ Emin Misin?</span>Bu şekil senin tahtanda değil, arkadaşının tahtasına bak!");
+                } else if (targetSlot.id === `slot_${activeDragCardId}`) {
+                    playSound('correct'); claimCardUI(activeDragIndex, targetBoardOwner, activeDragCardId);
+                    if (state.mode !== 'local') conn.send({ type: 'CLAIM', index: activeDragIndex, player: targetBoardOwner, cardId: activeDragCardId });
+                } else {
+                    dragFailed("<span class='toast-title'>❌ Yanlış Sembol!</span>Kuralları hatırla:<span class='toast-hint'>Doğru: <b>AB</b> | Işın: <b>[AB</b><br>Parça: <b>[AB]</b> | Uzunluk: <b>|AB|</b></span>");
+                }
+            } else {
+                dragFailed("<span class='toast-title'>⚠️ Iskaladın!</span>Şekli tam olarak sembolün üzerine bırakmalısın.");
+            }
+
+            dragClone.remove(); dragClone = null; activeDragIndex = null; activeDragCardId = null;
+        }
+
+        function dragFailed(msg) {
+            playSound('wrong'); showToastMessage(msg);
+            let originalEl = document.getElementById(`pool_${activeDragIndex}`);
+            if(originalEl) { originalEl.style.animation = "none"; void originalEl.offsetWidth; originalEl.style.animation = "shake 0.4s"; }
+        }
+
+        function claimCardUI(index, playerNum, cardId) {
+            let poolEl = document.getElementById(`pool_${index}`);
+            if(poolEl) poolEl.classList.add('claimed');
+            state.revealedIndex = null; state.actionPlayer = null;
+            let slotEl = document.getElementById(`slot_${cardId}`);
+            if (slotEl) slotEl.classList.add('filled');
+
+            if(playerNum === 1) state.p1Score++; else state.p2Score++;
+            state.drawTurn = state.drawTurn === 1 ? 2 : 1;
+            updateStatus(); checkWin();
+        }
+
+        function checkWin() {
+            if (state.p1Score === 10 || state.p2Score === 10) {
+                setTimeout(() => {
+                    playSound('tada'); document.getElementById('resultModal').style.display = 'flex'; fireConfetti();
+                    if (state.mode === 'local') document.getElementById('winnerText').innerText = state.p1Score === 10 ? "🎉 1. OYUNCU KAZANDI! 🎉" : "🎉 2. OYUNCU KAZANDI! 🎉";
+                    else document.getElementById('winnerText').innerText = ((state.p1Score===10 && state.myPlayer===1) || (state.p2Score===10 && state.myPlayer===2)) ? "🎉 SEN KAZANDIN! 🎉" : "😔 ARKADAŞIN KAZANDI...";
+                }, 500);
+            }
+        }
+
+        let particles = []; const canvas = document.getElementById('confetti'); const ctx = canvas.getContext('2d');
+        function fireConfetti() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            for(let i=0; i<150; i++) { particles.push({ x: canvas.width/2, y: canvas.height/2, r: Math.random()*8+3, dx: Math.random()*15-7.5, dy: Math.random()*15-10, color: ['#0abde3', '#1dd1a1', '#feca57', '#ff6b6b', '#9b59b6'][Math.floor(Math.random()*5)] }); }
+            animateConfetti();
+        }
+        function animateConfetti() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            particles.forEach(p => { p.x += p.dx; p.y += p.dy; p.dy += 0.25; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fillStyle = p.color; ctx.fill(); });
+            requestAnimationFrame(animateConfetti);
+        }
+    </script>
+</body>
+</html>
