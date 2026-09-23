@@ -172,15 +172,17 @@
         
         <button class="menu-btn purple" onclick="showInput('create')">🌐 Oda Kur (Host)</button>
         <div class="input-group" id="createGroup">
-            <input type="text" id="hostRoom" placeholder="Oda Adı (Örn: 6A)" autocomplete="off">
-            <input type="password" id="hostPass" placeholder="Oda Şifresi Belirle" autocomplete="off">
+            <!-- TARAYICI OTOMATİK DOLDURMA ENGELİ (new-password) EKLENDİ -->
+            <input type="text" id="hostRoom" placeholder="Oda Adı (Örn: 6A)" autocomplete="new-password">
+            <input type="password" id="hostPass" placeholder="Oda Şifresi Belirle" autocomplete="new-password">
             <button class="menu-btn purple" style="width:100%; font-size:1.1rem; padding:10px; margin:0;" onclick="createNetworkGame()">Oluştur ve Bekle</button>
         </div>
 
         <button class="menu-btn blue" onclick="showInput('join')">🤝 Odaya Katıl (Misafir)</button>
         <div class="input-group" id="joinGroup">
-            <input type="text" id="guestRoom" placeholder="Oda Adı" autocomplete="off">
-            <input type="password" id="guestPass" placeholder="Oda Şifresi" autocomplete="off">
+            <!-- TARAYICI OTOMATİK DOLDURMA ENGELİ (new-password) EKLENDİ -->
+            <input type="text" id="guestRoom" placeholder="Oda Adı" autocomplete="new-password">
+            <input type="password" id="guestPass" placeholder="Oda Şifresi" autocomplete="new-password">
             <button class="menu-btn blue" style="width:100%; font-size:1.1rem; padding:10px; margin:0;" onclick="joinNetworkGame()">Bağlan</button>
         </div>
         
