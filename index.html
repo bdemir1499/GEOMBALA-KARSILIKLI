@@ -176,17 +176,17 @@
         <button class="menu-btn purple" onclick="showInput('create')">🌐 Oda Kur (Host)</button>
         <div class="input-group" id="createGroup">
             <!-- TARAYICI OTOMATİK DOLDURMA ENGELİ (new-password) EKLENDİ -->
-            <input type="text" id="hostRoom" placeholder="Oda Adı (Örn: 6A)" autocomplete="new-password">
-            <input type="password" id="hostPass" placeholder="Oda Şifresi Belirle" autocomplete="new-password">
+            <input type="text" id="hostRoom" placeholder="Oda Adı (Örn: 6A)" autocomplete="new-password" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ]/g, '')">
+            <input type="password" id="hostPass" placeholder="Oda Şifresi Belirle" autocomplete="new-password" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '')">
             <button class="menu-btn purple" style="width:100%; font-size:1.1rem; padding:10px; margin:0;" onclick="createNetworkGame()">Oluştur ve Bekle</button>
         </div>
 
         <button class="menu-btn blue" onclick="showInput('join')">🤝 Odaya Katıl (Misafir)</button>
         <div class="input-group" id="joinGroup">
             <!-- TARAYICI OTOMATİK DOLDURMA ENGELİ (new-password) EKLENDİ -->
-            <input type="text" id="guestRoom" placeholder="Oda Adı" autocomplete="new-password">
-            <input type="password" id="guestPass" placeholder="Oda Şifresi" autocomplete="new-password">
-            <button class="menu-btn blue" style="width:100%; font-size:1.1rem; padding:10px; margin:0;" onclick="joinNetworkGame()">Bağlan</button>
+            <input type="text" id="guestRoom" placeholder="Oda Adı" autocomplete="new-password" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ]/g, '')">
+            <input type="password" id="guestPass" placeholder="Oda Şifresi" autocomplete="new-password" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '')">
+            <button class="menu-btn blue" id="joinBtn" style="width:100%; font-size:1.1rem; padding:10px; margin:0;" onclick="joinNetworkGame()">Bağlan</button>
         </div>
         
         <p id="connStatus" style="color:#d63031; font-weight:bold; margin-top:15px; text-align:center; padding:0 10px;"></p>
@@ -364,7 +364,16 @@
             });
         }
 
+        let connectionAttempts = 0;
+        let isLocked = false;
+
         function joinNetworkGame() {
+            if (isLocked) {
+                playSound('wrong');
+                showToastMessage("<span class='toast-title'>🔒 Kilitlendi</span>Çok fazla hatalı deneme yaptınız. Lütfen bekleyin.");
+                return;
+            }
+
             playSound('pop');
             const name = document.getElementById('guestRoom').value;
             const pass = document.getElementById('guestPass').value;
@@ -381,6 +390,7 @@
                 conn = peer.connect(secureId, { reliable: true });
                 
                 conn.on('open', () => { 
+                    connectionAttempts = 0; // Başarılı olunca sıfırla
                     updateStatusMsg("Bağlantı başarılı! Oyun başlatılıyor...", "#1dd1a1");
                     setupNetworkGame(2); 
                 });
@@ -391,10 +401,25 @@
             });
             
             peer.on('error', (err) => { 
-                if(err.type === 'peer-unavailable') {
-                    updateStatusMsg("Oda bulunamadı! Oda adını ve şifreyi kontrol edin.", "#d63031");
+                connectionAttempts++;
+                if (connectionAttempts >= 3) {
+                    isLocked = true;
+                    let btn = document.getElementById('joinBtn');
+                    if (btn) { btn.disabled = true; btn.style.opacity = "0.5"; btn.innerText = "Kilitlendi (30s)"; }
+                    updateStatusMsg("Çok fazla hatalı deneme! 30 saniye boyunca kilitlendi.", "#d63031");
+                    
+                    setTimeout(() => {
+                        isLocked = false;
+                        connectionAttempts = 0;
+                        if (btn) { btn.disabled = false; btn.style.opacity = "1"; btn.innerText = "Bağlan"; }
+                        updateStatusMsg("Tekrar deneyebilirsiniz.", "#f39c12");
+                    }, 30000);
                 } else {
-                    updateStatusMsg("Hata: " + err.type, "#d63031");
+                    if(err.type === 'peer-unavailable') {
+                        updateStatusMsg(`Oda bulunamadı! Kalan deneme hakkı: ${3 - connectionAttempts}`, "#d63031");
+                    } else {
+                        updateStatusMsg("Hata: " + err.type, "#d63031");
+                    }
                 }
             });
         }
