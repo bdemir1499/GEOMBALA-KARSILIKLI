@@ -194,6 +194,11 @@
         </div>
         
         <p id="connStatus" style="color:#d63031; font-weight:bold; margin-top:15px; text-align:center; padding:0 10px;"></p>
+
+        <!-- YENİ EKLENEN GİZLİLİK (KVKK) BİLDİRİMİ -->
+        <div style="font-size: 0.8rem; color: #7f8fa6; margin-top: 15px; text-align: center; width: 90%; max-width: 400px; line-height: 1.3;">
+            🔒 <b>Gizlilik Bildirimi:</b> Bu eğitim materyali hiçbir kişisel verinizi (isim, IP adresi, konum, çerez vb.) toplamaz, işlemez ve herhangi bir veritabanında saklamaz. Veriler yalnızca oyun esnasında cihazlar arasında anlık olarak şifreli iletilir ve oyun bitince silinir.
+        </div>
     </div>
 
     <div id="gameScreen">
@@ -226,459 +231,461 @@
     </div>
 
     <script>
-        const ALL_CARDS = [
-            { id: 1, text: "AB doğru parçası", symbol: "[AB]" }, { id: 2, text: "B noktası", symbol: "B" },
-            { id: 3, text: "CD doğrusu", symbol: "CD" }, { id: 4, text: "KLM açısı", symbol: "K<span class='angle-hat'>L</span>M" },
-            { id: 5, text: "MN ışını", symbol: "[MN" }, { id: 6, text: "AB doğru parçasının uzunluğu", symbol: "|AB|" },
-            { id: 7, text: "KL doğrusu", symbol: "KL" }, { id: 8, text: "C noktası", symbol: "C" },
-            { id: 9, text: "CD ışını", symbol: "[CD" }, { id: 10, text: "MN doğru parçası", symbol: "[MN]" },
-            { id: 11, text: "ABC açısı", symbol: "A<span class='angle-hat'>B</span>C" }, { id: 12, text: "AB doğrusu", symbol: "AB" },
-            { id: 13, text: "CD doğru parçası", symbol: "[CD]" }, { id: 14, text: "YZ doğru parçasının uzunluğu", symbol: "|YZ|" },
-            { id: 15, text: "Z noktası", symbol: "Z" }, { id: 16, text: "AB ışını", symbol: "[AB" },
-            { id: 17, text: "YZ doğrusu", symbol: "YZ" }, { id: 18, text: "KL doğru parçası", symbol: "[KL]" },
-            { id: 19, text: "MN doğrusu", symbol: "MN" }, { id: 20, text: "KL ışını", symbol: "[KL" }
-        ];
+        // YENİ EKLENEN KAPSÜL (IIFE) - Tüm değişkenleri dış dünyadan gizler
+        (function() {
 
-        const BOARD_1_LAYOUT = ['e', 1, 19, 'e', 6, 13, 'e', 5, 3, 15, 7, 8, 'e', 11, 'e'];
-        const BOARD_2_LAYOUT = [16, 17, 'e', 18, 2, 'e', 4, 'e', 10, 'e', 9, 'e', 20, 14, 12];
+            // YENİ EKLENEN KONSOL UYARISI
+            console.log("%c DUR!", "color: red; font-size: 50px; font-weight: bold; text-shadow: 2px 2px 0 #000;");
+            console.log("%c Burası geliştiriciler içindir. Konsolu açıp hile aramak yerine LGS geometri netlerini artırmaya ne dersin? 😉 - Bekir Hoca", "color: #5f27cd; font-size: 20px; font-weight: bold;");
 
-        // GÜVENLİK/KVKK KISMI: Daha güçlü STUN/TURN Yapılandırması
-        const peerOptions = {
-            config: {
-                iceTransportPolicy: 'all',
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:global.stun.twilio.com:3478' },
-                    { 
-                        urls: 'turn:openrelay.metered.ca:80',
-                        username: 'openrelayproject',
-                        credential: 'openrelayproject'
-                    },
-                    { 
-                        urls: 'turn:openrelay.metered.ca:443',
-                        username: 'openrelayproject',
-                        credential: 'openrelayproject'
-                    },
-                    { 
-                        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                        username: 'openrelayproject',
-                        credential: 'openrelayproject'
-                    }
-                ]
-            }
-        };
+            // YENİ EKLENEN SAĞ TIK VE F12 ENGELLEYİCİ
+            document.addEventListener('contextmenu', event => event.preventDefault());
 
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        let audioCtx;
-        function playSound(type) {
-            if (!audioCtx) audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            if (type === 'pop') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(900, now+0.1);
-                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now+0.1);
-                osc.start(now); osc.stop(now+0.1);
-            } else if (type === 'correct') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(1000, now+0.1);
-                gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now+0.2);
-                osc.start(now); osc.stop(now+0.2);
-            } else if (type === 'wrong') {
-                osc.type = 'triangle'; osc.frequency.setValueAtTime(250, now); osc.frequency.linearRampToValueAtTime(150, now+0.3);
-                gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now+0.3);
-                osc.start(now); osc.stop(now+0.3);
-            } else if (type === 'tada') {
-                [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                    o.type = 'sine'; o.connect(g); g.connect(audioCtx.destination);
-                    o.frequency.value = freq; g.gain.setValueAtTime(0, now+i*0.1);
-                    g.gain.linearRampToValueAtTime(0.3, now+i*0.1+0.05); g.gain.exponentialRampToValueAtTime(0.01, now+i*0.1+0.6);
-                    o.start(now+i*0.1); o.stop(now+i*0.1+0.6);
-                });
-            }
-        }
-
-        let state = { mode: 'local', drawTurn: 1, actionPlayer: null, myPlayer: 1, shuffledCards: [], revealedIndex: null, p1Score: 0, p2Score: 0 };
-        let peer = null; let conn = null;
-
-        function showInput(type) {
-            playSound('pop');
-            document.getElementById('createGroup').style.display = type === 'create' ? 'flex' : 'none';
-            document.getElementById('joinGroup').style.display = type === 'join' ? 'flex' : 'none';
-        }
-
-        // GÜVENLİK/KVKK: Oda adı ve şifresi bilgisayarda geri döndürülemez bir şifreye (hash) dönüştürülür.
-        // Dış sunuculara asla oda adınız ve şifreniz düz metin olarak gitmez.
-        function getSecureRoomId(roomName, password) {
-            let str = roomName.trim().toLowerCase() + "||_||" + password.trim();
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                let char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            let base = btoa(encodeURIComponent(str)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
-            return `geotmb_s_${Math.abs(hash).toString(36)}_${base}`;
-        }
-
-        function updateStatusMsg(msg, color) {
-            let el = document.getElementById('connStatus');
-            el.innerText = msg; el.style.color = color;
-        }
-
-        function createNetworkGame() {
-            playSound('pop');
-            const name = document.getElementById('hostRoom').value;
-            const pass = document.getElementById('hostPass').value;
-            if(!name || !pass) { alert("Lütfen oda adı ve şifresini eksiksiz girin!"); return; }
-            
-            updateStatusMsg("Oda şifreleniyor, bağlantı kuruluyor...", "#d35400");
-            
-            if(peer) peer.destroy();
-            const secureId = getSecureRoomId(name, pass);
-            peer = new Peer(secureId, peerOptions);
-            
-            peer.on('open', () => { 
-                updateStatusMsg(`Oda Kuruldu! Arkadaşının şifreyle bağlanması bekleniyor...`, "#1dd1a1");
-            });
-            
-            peer.on('connection', (connection) => { 
-                // YENİ EKLENEN GÜVENLİK (KAPIYI KİLİTLEME): 
-                // Eğer halihazırda biri bağlıysa (oyun başladıysa), dışarıdan gelen 3. kişileri veya 
-                // saldırı (spam) denemelerini anında reddet (Drop).
-                if (conn && conn.open) {
-                    connection.close(); // Bağlantıyı anında kes
-                    console.log("Yetkisiz 3. kişi erişimi engellendi.");
-                    return; 
+            document.addEventListener('keydown', function(e) {
+                // F12 veya Ctrl+Shift+I/J/C veya Ctrl+U basılırsa engelle
+                if (e.key === 'F12' || 
+                   (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+                   (e.ctrlKey && e.key === 'U')) {
+                    e.preventDefault();
                 }
-                
-                updateStatusMsg("Bağlantı yakalandı! Güvenli köprü kuruluyor...", "#0abde3");
-                conn = connection; 
-                
-                conn.on('open', () => {
-                    updateStatusMsg("Oyuncu bağlandı! Kapı kilitlendi, oyun başlıyor...", "#1dd1a1");
-                    setupNetworkGame(1);
-                });
             });
-            
-            peer.on('error', (err) => { 
-                updateStatusMsg("Oda açılamadı! (" + err.type + ")", "#d63031");
-            });
-        }
 
-        let connectionAttempts = 0;
-        let isLocked = false;
+            // --- MEVCUT OYUN KODLARI BURADAN İTİBAREN BAŞLAR ---
 
-        function joinNetworkGame() {
-            if (isLocked) {
-                playSound('wrong');
-                showToastMessage("<span class='toast-title'>🔒 Kilitlendi</span>Çok fazla hatalı deneme yaptınız. Lütfen bekleyin.");
-                return;
+            const ALL_CARDS = [
+                { id: 1, text: "AB doğru parçası", symbol: "[AB]" }, { id: 2, text: "B noktası", symbol: "B" },
+                { id: 3, text: "CD doğrusu", symbol: "CD" }, { id: 4, text: "KLM açısı", symbol: "K<span class='angle-hat'>L</span>M" },
+                { id: 5, text: "MN ışını", symbol: "[MN" }, { id: 6, text: "AB doğru parçasının uzunluğu", symbol: "|AB|" },
+                { id: 7, text: "KL doğrusu", symbol: "KL" }, { id: 8, text: "C noktası", symbol: "C" },
+                { id: 9, text: "CD ışını", symbol: "[CD" }, { id: 10, text: "MN doğru parçası", symbol: "[MN]" },
+                { id: 11, text: "ABC açısı", symbol: "A<span class='angle-hat'>B</span>C" }, { id: 12, text: "AB doğrusu", symbol: "AB" },
+                { id: 13, text: "CD doğru parçası", symbol: "[CD]" }, { id: 14, text: "YZ doğru parçasının uzunluğu", symbol: "|YZ|" },
+                { id: 15, text: "Z noktası", symbol: "Z" }, { id: 16, text: "AB ışını", symbol: "[AB" },
+                { id: 17, text: "YZ doğrusu", symbol: "YZ" }, { id: 18, text: "KL doğru parçası", symbol: "[KL]" },
+                { id: 19, text: "MN doğrusu", symbol: "MN" }, { id: 20, text: "KL ışını", symbol: "[KL" }
+            ];
+
+            const BOARD_1_LAYOUT = ['e', 1, 19, 'e', 6, 13, 'e', 5, 3, 15, 7, 8, 'e', 11, 'e'];
+            const BOARD_2_LAYOUT = [16, 17, 'e', 18, 2, 'e', 4, 'e', 10, 'e', 9, 'e', 20, 14, 12];
+
+            const peerOptions = {
+                config: {
+                    iceTransportPolicy: 'all',
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:global.stun.twilio.com:3478' },
+                        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+                        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+                        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+                    ]
+                }
+            };
+
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            let audioCtx;
+            function playSound(type) {
+                if (!audioCtx) audioCtx = new AudioContext();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                if (type === 'pop') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(900, now+0.1);
+                    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now+0.1);
+                    osc.start(now); osc.stop(now+0.1);
+                } else if (type === 'correct') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(1000, now+0.1);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now+0.2);
+                    osc.start(now); osc.stop(now+0.2);
+                } else if (type === 'wrong') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(250, now); osc.frequency.linearRampToValueAtTime(150, now+0.3);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now+0.3);
+                    osc.start(now); osc.stop(now+0.3);
+                } else if (type === 'tada') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                        o.type = 'sine'; o.connect(g); g.connect(audioCtx.destination);
+                        o.frequency.value = freq; g.gain.setValueAtTime(0, now+i*0.1);
+                        g.gain.linearRampToValueAtTime(0.3, now+i*0.1+0.05); g.gain.exponentialRampToValueAtTime(0.01, now+i*0.1+0.6);
+                        o.start(now+i*0.1); o.stop(now+i*0.1+0.6);
+                    });
+                }
             }
 
-            playSound('pop');
-            const name = document.getElementById('guestRoom').value;
-            const pass = document.getElementById('guestPass').value;
-            if(!name || !pass) { alert("Lütfen oda adı ve şifresini eksiksiz girin!"); return; }
-            
-            updateStatusMsg("Oda aranıyor...", "#0abde3");
-            
-            if(peer) peer.destroy();
-            peer = new Peer(undefined, peerOptions);
+            let state = { mode: 'local', drawTurn: 1, actionPlayer: null, myPlayer: 1, shuffledCards: [], revealedIndex: null, p1Score: 0, p2Score: 0 };
+            let peer = null; let conn = null;
 
-            peer.on('open', () => {
-                updateStatusMsg("Sinyal sunucusuna ulaşıldı, şifreli köprü kuruluyor...", "#f39c12");
+            function showInput(type) {
+                playSound('pop');
+                document.getElementById('createGroup').style.display = type === 'create' ? 'flex' : 'none';
+                document.getElementById('joinGroup').style.display = type === 'join' ? 'flex' : 'none';
+            }
+
+            function getSecureRoomId(roomName, password) {
+                let str = roomName.trim().toLowerCase() + "||_||" + password.trim();
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    let char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                let base = btoa(encodeURIComponent(str)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
+                return `geotmb_s_${Math.abs(hash).toString(36)}_${base}`;
+            }
+
+            function updateStatusMsg(msg, color) {
+                let el = document.getElementById('connStatus');
+                el.innerText = msg; el.style.color = color;
+            }
+
+            function createNetworkGame() {
+                playSound('pop');
+                const name = document.getElementById('hostRoom').value;
+                const pass = document.getElementById('hostPass').value;
+                if(!name || !pass) { alert("Lütfen oda adı ve şifresini eksiksiz girin!"); return; }
+                
+                updateStatusMsg("Oda şifreleniyor, bağlantı kuruluyor...", "#d35400");
+                
+                if(peer) peer.destroy();
                 const secureId = getSecureRoomId(name, pass);
-                conn = peer.connect(secureId, { reliable: true });
+                peer = new Peer(secureId, peerOptions);
                 
-                conn.on('open', () => { 
-                    connectionAttempts = 0; // Başarılı olunca sıfırla
-                    updateStatusMsg("Bağlantı başarılı! Oyun başlatılıyor...", "#1dd1a1");
-                    setupNetworkGame(2); 
+                peer.on('open', () => { 
+                    updateStatusMsg(`Oda Kuruldu! Arkadaşının şifreyle bağlanması bekleniyor...`, "#1dd1a1");
                 });
                 
-                conn.on('error', (err) => { 
-                    updateStatusMsg("Veri bağlantısı kurulamadı!", "#d63031");
-                });
-            });
-            
-            peer.on('error', (err) => { 
-                connectionAttempts++;
-                if (connectionAttempts >= 3) {
-                    isLocked = true;
-                    let btn = document.getElementById('joinBtn');
-                    if (btn) { btn.disabled = true; btn.style.opacity = "0.5"; btn.innerText = "Kilitlendi (30s)"; }
-                    updateStatusMsg("Çok fazla hatalı deneme! 30 saniye boyunca kilitlendi.", "#d63031");
-                    
-                    setTimeout(() => {
-                        isLocked = false;
-                        connectionAttempts = 0;
-                        if (btn) { btn.disabled = false; btn.style.opacity = "1"; btn.innerText = "Bağlan"; }
-                        updateStatusMsg("Tekrar deneyebilirsiniz.", "#f39c12");
-                    }, 30000);
-                } else {
-                    if(err.type === 'peer-unavailable') {
-                        updateStatusMsg(`Oda bulunamadı! Kalan deneme hakkı: ${3 - connectionAttempts}`, "#d63031");
-                    } else {
-                        updateStatusMsg("Hata: " + err.type, "#d63031");
+                peer.on('connection', (connection) => { 
+                    if (conn && conn.open) {
+                        connection.close(); 
+                        console.log("Yetkisiz 3. kişi erişimi engellendi.");
+                        return; 
                     }
-                }
-            });
-        }
-
-        function setupNetworkGame(playerNum) {
-            state.mode = playerNum === 1 ? 'host' : 'guest';
-            state.myPlayer = playerNum;
-            
-            conn.on('data', (data) => {
-                // GÜVENLİK/ANTI-CHEAT: Dışarıdan gelen verinin yapısını sıkı bir şekilde denetle
-                // Veri formatı bozuksa veya kurallara uymuyorsa reddet (Hile Koruması)
-                if (!data || typeof data !== 'object') return;
-
-                if (data.type === 'START' && Array.isArray(data.cards)) { 
-                    state.shuffledCards = data.cards; state.drawTurn = 1; buildGameUI(); 
-                } 
-                else if (data.type === 'REVEAL' && typeof data.index === 'number') {
-                    // Karşı taraf sırası gelmeden veya geçersiz bir kartı açmaya çalışıyorsa engelle
-                    if (state.drawTurn === state.myPlayer || data.index < 0 || data.index >= 20) return;
-                    revealCardUI(data.index); 
-                } 
-                else if (data.type === 'CLAIM' && typeof data.index === 'number' && typeof data.player === 'number' && typeof data.cardId === 'number') { 
-                    // 1. Kart gerçekten açık olan kart mı?
-                    if (data.index !== state.revealedIndex) return;
                     
-                    // 2. İddia edilen kart ID'si, açılan kartın ID'si ile eşleşiyor mu?
-                    if (state.shuffledCards[data.index].id !== data.cardId) return;
+                    updateStatusMsg("Bağlantı yakalandı! Güvenli köprü kuruluyor...", "#0abde3");
+                    conn = connection; 
+                    
+                    conn.on('open', () => {
+                        updateStatusMsg("Oyuncu bağlandı! Kapı kilitlendi, oyun başlıyor...", "#1dd1a1");
+                        setupNetworkGame(1);
+                    });
+                });
+                
+                peer.on('error', (err) => { 
+                    updateStatusMsg("Oda açılamadı! (" + err.type + ")", "#d63031");
+                });
+            }
 
-                    // 3. İddia eden oyuncunun (1 veya 2) tahtasında bu kart gerçekten var mı?
-                    let validBoard = data.player === 1 ? BOARD_1_LAYOUT : BOARD_2_LAYOUT;
-                    if (!validBoard.includes(data.cardId)) return;
+            let connectionAttempts = 0;
+            let isLocked = false;
 
-                    // Her şey kurallara uygunsa işlemi onayla
-                    claimCardUI(data.index, data.player, data.cardId); 
+            function joinNetworkGame() {
+                if (isLocked) {
+                    playSound('wrong');
+                    showToastMessage("<span class='toast-title'>🔒 Kilitlendi</span>Çok fazla hatalı deneme yaptınız. Lütfen bekleyin.");
+                    return;
                 }
-            });
-            
-            if (state.mode === 'host') {
+
+                playSound('pop');
+                const name = document.getElementById('guestRoom').value;
+                const pass = document.getElementById('guestPass').value;
+                if(!name || !pass) { alert("Lütfen oda adı ve şifresini eksiksiz girin!"); return; }
+                
+                updateStatusMsg("Oda aranıyor...", "#0abde3");
+                
+                if(peer) peer.destroy();
+                peer = new Peer(undefined, peerOptions);
+
+                peer.on('open', () => {
+                    updateStatusMsg("Sinyal sunucusuna ulaşıldı, şifreli köprü kuruluyor...", "#f39c12");
+                    const secureId = getSecureRoomId(name, pass);
+                    conn = peer.connect(secureId, { reliable: true });
+                    
+                    conn.on('open', () => { 
+                        connectionAttempts = 0; 
+                        updateStatusMsg("Bağlantı başarılı! Oyun başlatılıyor...", "#1dd1a1");
+                        setupNetworkGame(2); 
+                    });
+                    
+                    conn.on('error', (err) => { 
+                        updateStatusMsg("Veri bağlantısı kurulamadı!", "#d63031");
+                    });
+                });
+                
+                peer.on('error', (err) => { 
+                    connectionAttempts++;
+                    if (connectionAttempts >= 3) {
+                        isLocked = true;
+                        let btn = document.getElementById('joinBtn');
+                        if (btn) { btn.disabled = true; btn.style.opacity = "0.5"; btn.innerText = "Kilitlendi (30s)"; }
+                        updateStatusMsg("Çok fazla hatalı deneme! 30 saniye boyunca kilitlendi.", "#d63031");
+                        
+                        setTimeout(() => {
+                            isLocked = false;
+                            connectionAttempts = 0;
+                            if (btn) { btn.disabled = false; btn.style.opacity = "1"; btn.innerText = "Bağlan"; }
+                            updateStatusMsg("Tekrar deneyebilirsiniz.", "#f39c12");
+                        }, 30000);
+                    } else {
+                        if(err.type === 'peer-unavailable') {
+                            updateStatusMsg(`Oda bulunamadı! Kalan deneme hakkı: ${3 - connectionAttempts}`, "#d63031");
+                        } else {
+                            updateStatusMsg("Hata: " + err.type, "#d63031");
+                        }
+                    }
+                });
+            }
+
+            function setupNetworkGame(playerNum) {
+                state.mode = playerNum === 1 ? 'host' : 'guest';
+                state.myPlayer = playerNum;
+                
+                conn.on('data', (data) => {
+                    if (!data || typeof data !== 'object') return;
+
+                    if (data.type === 'START' && Array.isArray(data.cards)) { 
+                        state.shuffledCards = data.cards; state.drawTurn = 1; buildGameUI(); 
+                    } 
+                    else if (data.type === 'REVEAL' && typeof data.index === 'number') {
+                        if (state.drawTurn === state.myPlayer || data.index < 0 || data.index >= 20) return;
+                        revealCardUI(data.index); 
+                    } 
+                    else if (data.type === 'CLAIM' && typeof data.index === 'number' && typeof data.player === 'number' && typeof data.cardId === 'number') { 
+                        if (data.index !== state.revealedIndex) return;
+                        if (state.shuffledCards[data.index].id !== data.cardId) return;
+                        let validBoard = data.player === 1 ? BOARD_1_LAYOUT : BOARD_2_LAYOUT;
+                        if (!validBoard.includes(data.cardId)) return;
+
+                        claimCardUI(data.index, data.player, data.cardId); 
+                    }
+                });
+                
+                if (state.mode === 'host') {
+                    state.shuffledCards = [...ALL_CARDS].sort(() => Math.random() - 0.5);
+                    setTimeout(() => { conn.send({ type: 'START', cards: state.shuffledCards }); }, 1500);
+                    buildGameUI();
+                }
+            }
+
+            function startLocalGame() {
+                playSound('pop');
+                state.mode = 'local'; state.myPlayer = 1;
+                state.drawTurn = 1;
                 state.shuffledCards = [...ALL_CARDS].sort(() => Math.random() - 0.5);
-                setTimeout(() => { conn.send({ type: 'START', cards: state.shuffledCards }); }, 1500);
                 buildGameUI();
             }
-        }
 
-        function startLocalGame() {
-            playSound('pop');
-            state.mode = 'local'; state.myPlayer = 1;
-            state.drawTurn = 1;
-            state.shuffledCards = [...ALL_CARDS].sort(() => Math.random() - 0.5);
-            buildGameUI();
-        }
-
-        function buildGameUI() {
-            document.getElementById('menuScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'flex';
-            if (state.mode === 'local') {
-                document.getElementById('p1Title').innerText = "1. Oyuncu (Şekil-2)";
-                document.getElementById('p2Title').innerText = "2. Oyuncu (Şekil-3)";
-            } else {
-                document.getElementById('p1Title').innerText = state.myPlayer === 1 ? "1. Oyuncu (Sen)" : "1. Oyuncu (Rakip)";
-                document.getElementById('p2Title').innerText = state.myPlayer === 2 ? "2. Oyuncu (Sen)" : "2. Oyuncu (Rakip)";
-                if(state.myPlayer === 1) { document.getElementById('board1_container').style.borderColor = "#ff9f43"; document.getElementById('board2_container').classList.add('board-hidden'); }
-                if(state.myPlayer === 2) { document.getElementById('board2_container').style.borderColor = "#ff9f43"; document.getElementById('board1_container').classList.add('board-hidden'); }
-            }
-            renderPool();
-            renderBoard('board1', BOARD_1_LAYOUT);
-            renderBoard('board2', BOARD_2_LAYOUT);
-            updateStatus();
-        }
-
-        function renderPool() {
-            const grid = document.getElementById('cardsGrid'); grid.innerHTML = '';
-            state.shuffledCards.forEach((card, index) => {
-                let div = document.createElement('div');
-                div.className = 'pool-card'; div.id = `pool_${index}`; div.innerText = "?";
-                div.onclick = () => handlePoolClick(index);
-                div.onpointerdown = (e) => startDrag(e, div, index, card.id);
-                grid.appendChild(div);
-            });
-        }
-
-        function renderBoard(elementId, layout) {
-            const grid = document.getElementById(elementId); grid.innerHTML = '';
-            layout.forEach(item => {
-                let div = document.createElement('div');
-                if (item === 'e') { div.className = 'board-slot empty-deco'; } 
-                else {
-                    let cardData = ALL_CARDS.find(c => c.id === item);
-                    div.className = 'board-slot'; div.id = `slot_${item}`; div.innerHTML = cardData.symbol;
-                }
-                grid.appendChild(div);
-            });
-        }
-
-        function updateStatus() {
-            const sb = document.getElementById('statusBar');
-            if (state.revealedIndex !== null) {
-                sb.innerText = "👀 Şekil açıldı! Kendi kartında bulan sürüklesin.";
-                sb.style.borderColor = "#9b59b6"; sb.style.color = "#8e44ad";
-                return;
-            }
-            if (state.mode === 'local') {
-                sb.innerText = `${state.drawTurn}. Oyuncu Torbadan Kart Çeksin 🎯`;
-                sb.style.borderColor = state.drawTurn === 1 ? "#0abde3" : "#10ac84";
-                sb.style.color = state.drawTurn === 1 ? "#0abde3" : "#10ac84";
-            } else {
-                if (state.drawTurn === state.myPlayer) {
-                    sb.innerText = "Sıra Sende! Torbadan bir kart aç 🎯";
-                    sb.style.borderColor = "#1dd1a1"; sb.style.color = "#1dd1a1";
+            function buildGameUI() {
+                document.getElementById('menuScreen').style.display = 'none';
+                document.getElementById('gameScreen').style.display = 'flex';
+                if (state.mode === 'local') {
+                    document.getElementById('p1Title').innerText = "1. Oyuncu (Şekil-2)";
+                    document.getElementById('p2Title').innerText = "2. Oyuncu (Şekil-3)";
                 } else {
-                    sb.innerText = "Sıra Rakipte... Torbadan kart çekmesini bekle ⏳";
-                    sb.style.borderColor = "#a4b0be"; sb.style.color = "#57606f";
+                    document.getElementById('p1Title').innerText = state.myPlayer === 1 ? "1. Oyuncu (Sen)" : "1. Oyuncu (Rakip)";
+                    document.getElementById('p2Title').innerText = state.myPlayer === 2 ? "2. Oyuncu (Sen)" : "2. Oyuncu (Rakip)";
+                    if(state.myPlayer === 1) { document.getElementById('board1_container').style.borderColor = "#ff9f43"; document.getElementById('board2_container').classList.add('board-hidden'); }
+                    if(state.myPlayer === 2) { document.getElementById('board2_container').style.borderColor = "#ff9f43"; document.getElementById('board1_container').classList.add('board-hidden'); }
                 }
-            }
-        }
-
-        function showToastMessage(msg) {
-            let toast = document.getElementById('toast');
-            toast.innerHTML = msg;
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 3500);
-        }
-
-        function handlePoolClick(index) {
-            if (state.revealedIndex !== null) {
-                playSound('wrong'); showToastMessage("<span class='toast-title'>⚠️ Uyarı!</span>Önce açık olan şekli yerleştirmelisin."); return;
-            }
-            if (state.mode !== 'local' && state.drawTurn !== state.myPlayer) {
-                playSound('wrong'); showToastMessage("<span class='toast-title'>✋ Bekle!</span>Kart çekme sırası rakipte."); return;
-            }
-            let el = document.getElementById(`pool_${index}`);
-            if (el.classList.contains('revealed') || el.classList.contains('claimed')) return;
-            
-            playSound('pop'); 
-            revealCardUI(index);
-            if (state.mode !== 'local') conn.send({ type: 'REVEAL', index: index });
-        }
-
-        function revealCardUI(index) {
-            state.revealedIndex = index;
-            let cardId = state.shuffledCards[index].id;
-            state.actionPlayer = BOARD_1_LAYOUT.includes(cardId) ? 1 : 2;
-            let el = document.getElementById(`pool_${index}`);
-            el.classList.add('revealed'); el.innerText = state.shuffledCards[index].text;
-            updateStatus(); 
-        }
-
-        let dragClone = null; let activeDragIndex = null; let activeDragCardId = null;
-
-        function startDrag(e, sourceEl, index, cardId) {
-            if (!sourceEl.classList.contains('revealed')) return;
-            if (state.mode !== 'local' && state.actionPlayer !== state.myPlayer) {
-                playSound('wrong'); showToastMessage("<span class='toast-title'>✋ Bekle!</span>Bu şekil senin kartında yok sanki?"); return;
+                renderPool();
+                renderBoard('board1', BOARD_1_LAYOUT);
+                renderBoard('board2', BOARD_2_LAYOUT);
+                updateStatus();
             }
 
-            e.preventDefault(); playSound('pop');
-            activeDragIndex = index; activeDragCardId = cardId;
-            dragClone = sourceEl.cloneNode(true); dragClone.classList.add('drag-clone');
-            document.body.appendChild(dragClone);
-            moveClone(e);
-            
-            window.addEventListener('pointermove', moveDrag);
-            window.addEventListener('pointerup', endDrag);
-        }
+            function renderPool() {
+                const grid = document.getElementById('cardsGrid'); grid.innerHTML = '';
+                state.shuffledCards.forEach((card, index) => {
+                    let div = document.createElement('div');
+                    div.className = 'pool-card'; div.id = `pool_${index}`; div.innerText = "?";
+                    div.onclick = () => handlePoolClick(index);
+                    div.onpointerdown = (e) => startDrag(e, div, index, card.id);
+                    grid.appendChild(div);
+                });
+            }
 
-        function moveClone(e) {
-            if(dragClone) {
-                let clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
-                let clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
-                if(clientX !== undefined && clientY !== undefined) {
-                    dragClone.style.left = (clientX - dragClone.offsetWidth/2) + 'px';
-                    dragClone.style.top = (clientY - dragClone.offsetHeight/2) + 'px';
+            function renderBoard(elementId, layout) {
+                const grid = document.getElementById(elementId); grid.innerHTML = '';
+                layout.forEach(item => {
+                    let div = document.createElement('div');
+                    if (item === 'e') { div.className = 'board-slot empty-deco'; } 
+                    else {
+                        let cardData = ALL_CARDS.find(c => c.id === item);
+                        div.className = 'board-slot'; div.id = `slot_${item}`; div.innerHTML = cardData.symbol;
+                    }
+                    grid.appendChild(div);
+                });
+            }
+
+            function updateStatus() {
+                const sb = document.getElementById('statusBar');
+                if (state.revealedIndex !== null) {
+                    sb.innerText = "👀 Şekil açıldı! Kendi kartında bulan sürüklesin.";
+                    sb.style.borderColor = "#9b59b6"; sb.style.color = "#8e44ad";
+                    return;
                 }
-            } 
-        }
-
-        function moveDrag(e) { moveClone(e); }
-
-        function endDrag(e) {
-            window.removeEventListener('pointermove', moveDrag);
-            window.removeEventListener('pointerup', endDrag);
-            if (!dragClone) return;
-
-            let clientX = e.clientX !== undefined ? e.clientX : (e.changedTouches && e.changedTouches[0].clientX);
-            let clientY = e.clientY !== undefined ? e.clientY : (e.changedTouches && e.changedTouches[0].clientY);
-            
-            let targetSlot = null; let minDistance = 80; 
-            let slots = document.querySelectorAll('.player-board:not(.board-hidden) .board-slot:not(.empty-deco):not(.filled)');
-            
-            for (let slot of slots) {
-                let rect = slot.getBoundingClientRect();
-                let slotCenterX = rect.left + (rect.width / 2);
-                let slotCenterY = rect.top + (rect.height / 2);
-                let distance = Math.hypot(clientX - slotCenterX, clientY - slotCenterY);
-                if (distance < minDistance) { minDistance = distance; targetSlot = slot; }
-            }
-
-            if (targetSlot) {
-                let isP1Target = document.getElementById('board1').contains(targetSlot);
-                let targetBoardOwner = isP1Target ? 1 : 2;
-
-                if (state.mode === 'local' && targetBoardOwner !== state.actionPlayer) {
-                    dragFailed("<span class='toast-title'>❌ Emin Misin?</span>Bu şekil senin tahtanda değil, arkadaşının tahtasına bak!");
-                } else if (targetSlot.id === `slot_${activeDragCardId}`) {
-                    playSound('correct'); claimCardUI(activeDragIndex, targetBoardOwner, activeDragCardId);
-                    if (state.mode !== 'local') conn.send({ type: 'CLAIM', index: activeDragIndex, player: targetBoardOwner, cardId: activeDragCardId });
+                if (state.mode === 'local') {
+                    sb.innerText = `${state.drawTurn}. Oyuncu Torbadan Kart Çeksin 🎯`;
+                    sb.style.borderColor = state.drawTurn === 1 ? "#0abde3" : "#10ac84";
+                    sb.style.color = state.drawTurn === 1 ? "#0abde3" : "#10ac84";
                 } else {
-                    dragFailed("<span class='toast-title'>❌ Yanlış Sembol!</span>Kuralları hatırla:<span class='toast-hint'>Doğru: <b>AB</b> | Işın: <b>[AB</b><br>Parça: <b>[AB]</b> | Uzunluk: <b>|AB|</b></span>");
+                    if (state.drawTurn === state.myPlayer) {
+                        sb.innerText = "Sıra Sende! Torbadan bir kart aç 🎯";
+                        sb.style.borderColor = "#1dd1a1"; sb.style.color = "#1dd1a1";
+                    } else {
+                        sb.innerText = "Sıra Rakipte... Torbadan kart çekmesini bekle ⏳";
+                        sb.style.borderColor = "#a4b0be"; sb.style.color = "#57606f";
+                    }
                 }
-            } else {
-                dragFailed("<span class='toast-title'>⚠️ Iskaladın!</span>Şekli tam olarak sembolün üzerine bırakmalısın.");
             }
 
-            dragClone.remove(); dragClone = null; activeDragIndex = null; activeDragCardId = null;
-        }
-
-        function dragFailed(msg) {
-            playSound('wrong'); showToastMessage(msg);
-            let originalEl = document.getElementById(`pool_${activeDragIndex}`);
-            if(originalEl) { originalEl.style.animation = "none"; void originalEl.offsetWidth; originalEl.style.animation = "shake 0.4s"; }
-        }
-
-        function claimCardUI(index, playerNum, cardId) {
-            let poolEl = document.getElementById(`pool_${index}`);
-            if(poolEl) poolEl.classList.add('claimed');
-            state.revealedIndex = null; state.actionPlayer = null;
-            let slotEl = document.getElementById(`slot_${cardId}`);
-            if (slotEl) slotEl.classList.add('filled');
-
-            if(playerNum === 1) state.p1Score++; else state.p2Score++;
-            state.drawTurn = state.drawTurn === 1 ? 2 : 1;
-            updateStatus(); checkWin();
-        }
-
-        function checkWin() {
-            if (state.p1Score === 10 || state.p2Score === 10) {
-                setTimeout(() => {
-                    playSound('tada'); document.getElementById('resultModal').style.display = 'flex'; fireConfetti();
-                    if (state.mode === 'local') document.getElementById('winnerText').innerText = state.p1Score === 10 ? "🎉 1. OYUNCU KAZANDI! 🎉" : "🎉 2. OYUNCU KAZANDI! 🎉";
-                    else document.getElementById('winnerText').innerText = ((state.p1Score===10 && state.myPlayer===1) || (state.p2Score===10 && state.myPlayer===2)) ? "🎉 SEN KAZANDIN! 🎉" : "😔 ARKADAŞIN KAZANDI...";
-                }, 500);
+            function showToastMessage(msg) {
+                let toast = document.getElementById('toast');
+                toast.innerHTML = msg;
+                toast.style.display = 'block';
+                setTimeout(() => { toast.style.display = 'none'; }, 3500);
             }
-        }
 
-        let particles = []; const canvas = document.getElementById('confetti'); const ctx = canvas.getContext('2d');
-        function fireConfetti() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            for(let i=0; i<150; i++) { particles.push({ x: canvas.width/2, y: canvas.height/2, r: Math.random()*8+3, dx: Math.random()*15-7.5, dy: Math.random()*15-10, color: ['#0abde3', '#1dd1a1', '#feca57', '#ff6b6b', '#9b59b6'][Math.floor(Math.random()*5)] }); }
-            animateConfetti();
-        }
-        function animateConfetti() {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            particles.forEach(p => { p.x += p.dx; p.y += p.dy; p.dy += 0.25; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fillStyle = p.color; ctx.fill(); });
-            requestAnimationFrame(animateConfetti);
-        }
+            function handlePoolClick(index) {
+                if (state.revealedIndex !== null) {
+                    playSound('wrong'); showToastMessage("<span class='toast-title'>⚠️ Uyarı!</span>Önce açık olan şekli yerleştirmelisin."); return;
+                }
+                if (state.mode !== 'local' && state.drawTurn !== state.myPlayer) {
+                    playSound('wrong'); showToastMessage("<span class='toast-title'>✋ Bekle!</span>Kart çekme sırası rakipte."); return;
+                }
+                let el = document.getElementById(`pool_${index}`);
+                if (el.classList.contains('revealed') || el.classList.contains('claimed')) return;
+                
+                playSound('pop'); 
+                revealCardUI(index);
+                if (state.mode !== 'local') conn.send({ type: 'REVEAL', index: index });
+            }
+
+            function revealCardUI(index) {
+                state.revealedIndex = index;
+                let cardId = state.shuffledCards[index].id;
+                state.actionPlayer = BOARD_1_LAYOUT.includes(cardId) ? 1 : 2;
+                let el = document.getElementById(`pool_${index}`);
+                el.classList.add('revealed'); el.innerText = state.shuffledCards[index].text;
+                updateStatus(); 
+            }
+
+            let dragClone = null; let activeDragIndex = null; let activeDragCardId = null;
+
+            function startDrag(e, sourceEl, index, cardId) {
+                if (!sourceEl.classList.contains('revealed')) return;
+                if (state.mode !== 'local' && state.actionPlayer !== state.myPlayer) {
+                    playSound('wrong'); showToastMessage("<span class='toast-title'>✋ Bekle!</span>Bu şekil senin kartında yok sanki?"); return;
+                }
+
+                e.preventDefault(); playSound('pop');
+                activeDragIndex = index; activeDragCardId = cardId;
+                dragClone = sourceEl.cloneNode(true); dragClone.classList.add('drag-clone');
+                document.body.appendChild(dragClone);
+                moveClone(e);
+                
+                window.addEventListener('pointermove', moveDrag);
+                window.addEventListener('pointerup', endDrag);
+            }
+
+            function moveClone(e) {
+                if(dragClone) {
+                    let clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+                    let clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+                    if(clientX !== undefined && clientY !== undefined) {
+                        dragClone.style.left = (clientX - dragClone.offsetWidth/2) + 'px';
+                        dragClone.style.top = (clientY - dragClone.offsetHeight/2) + 'px';
+                    }
+                } 
+            }
+
+            function moveDrag(e) { moveClone(e); }
+
+            function endDrag(e) {
+                window.removeEventListener('pointermove', moveDrag);
+                window.removeEventListener('pointerup', endDrag);
+                if (!dragClone) return;
+
+                let clientX = e.clientX !== undefined ? e.clientX : (e.changedTouches && e.changedTouches[0].clientX);
+                let clientY = e.clientY !== undefined ? e.clientY : (e.changedTouches && e.changedTouches[0].clientY);
+                
+                let targetSlot = null; let minDistance = 80; 
+                let slots = document.querySelectorAll('.player-board:not(.board-hidden) .board-slot:not(.empty-deco):not(.filled)');
+                
+                for (let slot of slots) {
+                    let rect = slot.getBoundingClientRect();
+                    let slotCenterX = rect.left + (rect.width / 2);
+                    let slotCenterY = rect.top + (rect.height / 2);
+                    let distance = Math.hypot(clientX - slotCenterX, clientY - slotCenterY);
+                    if (distance < minDistance) { minDistance = distance; targetSlot = slot; }
+                }
+
+                if (targetSlot) {
+                    let isP1Target = document.getElementById('board1').contains(targetSlot);
+                    let targetBoardOwner = isP1Target ? 1 : 2;
+
+                    if (state.mode === 'local' && targetBoardOwner !== state.actionPlayer) {
+                        dragFailed("<span class='toast-title'>❌ Emin Misin?</span>Bu şekil senin tahtanda değil, arkadaşının tahtasına bak!");
+                    } else if (targetSlot.id === `slot_${activeDragCardId}`) {
+                        playSound('correct'); claimCardUI(activeDragIndex, targetBoardOwner, activeDragCardId);
+                        if (state.mode !== 'local') conn.send({ type: 'CLAIM', index: activeDragIndex, player: targetBoardOwner, cardId: activeDragCardId });
+                    } else {
+                        dragFailed("<span class='toast-title'>❌ Yanlış Sembol!</span>Kuralları hatırla:<span class='toast-hint'>Doğru: <b>AB</b> | Işın: <b>[AB</b><br>Parça: <b>[AB]</b> | Uzunluk: <b>|AB|</b></span>");
+                    }
+                } else {
+                    dragFailed("<span class='toast-title'>⚠️ Iskaladın!</span>Şekli tam olarak sembolün üzerine bırakmalısın.");
+                }
+
+                dragClone.remove(); dragClone = null; activeDragIndex = null; activeDragCardId = null;
+            }
+
+            function dragFailed(msg) {
+                playSound('wrong'); showToastMessage(msg);
+                let originalEl = document.getElementById(`pool_${activeDragIndex}`);
+                if(originalEl) { originalEl.style.animation = "none"; void originalEl.offsetWidth; originalEl.style.animation = "shake 0.4s"; }
+            }
+
+            function claimCardUI(index, playerNum, cardId) {
+                let poolEl = document.getElementById(`pool_${index}`);
+                if(poolEl) poolEl.classList.add('claimed');
+                state.revealedIndex = null; state.actionPlayer = null;
+                let slotEl = document.getElementById(`slot_${cardId}`);
+                if (slotEl) slotEl.classList.add('filled');
+
+                if(playerNum === 1) state.p1Score++; else state.p2Score++;
+                state.drawTurn = state.drawTurn === 1 ? 2 : 1;
+                updateStatus(); checkWin();
+            }
+
+            function checkWin() {
+                if (state.p1Score === 10 || state.p2Score === 10) {
+                    setTimeout(() => {
+                        playSound('tada'); document.getElementById('resultModal').style.display = 'flex'; fireConfetti();
+                        if (state.mode === 'local') document.getElementById('winnerText').innerText = state.p1Score === 10 ? "🎉 1. OYUNCU KAZANDI! 🎉" : "🎉 2. OYUNCU KAZANDI! 🎉";
+                        else document.getElementById('winnerText').innerText = ((state.p1Score===10 && state.myPlayer===1) || (state.p2Score===10 && state.myPlayer===2)) ? "🎉 SEN KAZANDIN! 🎉" : "😔 ARKADAŞIN KAZANDI...";
+                    }, 500);
+                }
+            }
+
+            let particles = []; const canvas = document.getElementById('confetti'); const ctx = canvas.getContext('2d');
+            function fireConfetti() {
+                canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+                for(let i=0; i<150; i++) { particles.push({ x: canvas.width/2, y: canvas.height/2, r: Math.random()*8+3, dx: Math.random()*15-7.5, dy: Math.random()*15-10, color: ['#0abde3', '#1dd1a1', '#feca57', '#ff6b6b', '#9b59b6'][Math.floor(Math.random()*5)] }); }
+                animateConfetti();
+            }
+            function animateConfetti() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                particles.forEach(p => { p.x += p.dx; p.y += p.dy; p.dy += 0.25; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fillStyle = p.color; ctx.fill(); });
+                requestAnimationFrame(animateConfetti);
+            }
+
+            // --- HTML'DEKİ BUTONLARIN ÇALIŞMASI İÇİN FONKSİYONLARI KAPSÜLDEN DIŞARI AKTARMA ---
+            window.startLocalGame = startLocalGame;
+            window.showInput = showInput;
+            window.createNetworkGame = createNetworkGame;
+            window.joinNetworkGame = joinNetworkGame;
+
+        })();
     </script>
 
 </body>
